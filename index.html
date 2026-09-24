@@ -551,7 +551,7 @@
                 };
                 container.appendChild(captureBtn);
             } catch (err) {
-                alert('Camera access denied. Use file input instead.');
+                document.getElementById('splitMessage').innerHTML = '<div class="error">⚠️ Camera not available. Use file upload instead.</div>';
             }
         }
 
@@ -687,6 +687,60 @@
             }, 2000);
         }
 
+        function showTransactionDetail(phone, transactionIndex) {
+            const peopleDetails = {};
+
+            splits.forEach(split => {
+                split.friends.forEach(f => {
+                    if (f.phone === phone) {
+                        if (!peopleDetails[f.phone]) {
+                            peopleDetails[f.phone] = [];
+                        }
+                        peopleDetails[f.phone].push({ amount: f.amount, date: split.date, total: split.total, photo: split.photo });
+                    }
+                });
+            });
+
+            const transaction = peopleDetails[phone][transactionIndex];
+            const splitIndex = splits.findIndex(s => s.date === transaction.date);
+            const split = splits[splitIndex];
+
+            document.getElementById('detailContent').innerHTML = `
+                <button class="btn btn-secondary" onclick="showPersonDetail('${phone}')">← Back</button>
+                <div style="margin-top: 12px;">
+                    <h3 style="font-size: 16px; font-weight: 700; margin-bottom: 12px;">Transaction Details</h3>
+                    <div class="bill-item">
+                        <div class="bill-header">
+                            <span style="font-weight: 600;">Receipt Total</span>
+                            <span style="font-weight: 700; color: #FF7A59;">$${transaction.total.toFixed(2)}</span>
+                        </div>
+                        <div class="bill-date">${transaction.date}</div>
+                    </div>
+                    <div class="bill-item" style="margin-top: 12px;">
+                        <div style="font-size: 13px; color: #666; margin-bottom: 4px;">Your Share</div>
+                        <div style="font-size: 20px; font-weight: 700; color: #FF7A59;">$${transaction.amount.toFixed(2)}</div>
+                    </div>
+                    <div class="bill-item" style="margin-top: 12px;">
+                        <div style="font-size: 13px; color: #666; margin-bottom: 8px;">Split Among ${split.friends.length} friends</div>
+                        ${split.friends.map(f => `
+                            <div style="display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid #eee;">
+                                <span style="font-size: 13px;">${f.name}</span>
+                                <span style="font-weight: 600;">$${f.amount.toFixed(2)}</span>
+                            </div>
+                        `).join('')}
+                    </div>
+                    ${transaction.photo ? `
+                        <div style="margin-top: 12px;">
+                            <img src="${transaction.photo}" style="width: 100%; border-radius: 8px; max-height: 200px; object-fit: cover;">
+                        </div>
+                    ` : ''}
+                </div>
+            `;
+
+            document.getElementById('peopleList').parentElement.style.display = 'none';
+            document.getElementById('detailView').style.display = 'block';
+        }
+
         function showPersonDetail(phone) {
             const peopleData = {};
             const peopleDetails = {};
@@ -708,7 +762,8 @@
             const details = peopleDetails[phone] || [];
 
             document.getElementById('detailContent').innerHTML = `
-                <div style="margin-bottom: 16px;">
+                <button class="btn btn-secondary" onclick="closeDetail()">← Back</button>
+                <div style="margin-top: 12px; margin-bottom: 16px;">
                     <div class="person-avatar" style="margin: 0 auto; width: 60px; height: 60px; font-size: 24px;">${person.name[0]}</div>
                     <h2 style="text-align: center; margin-top: 12px; font-size: 20px;">${person.name}</h2>
                     <p style="text-align: center; color: #666; margin: 4px 0;">${phone}</p>
@@ -720,9 +775,9 @@
                     </div>
                 </div>
                 <div style="margin-bottom: 12px;">
-                    <label class="label">Breakdown by Receipt:</label>
-                    ${details.map(d => `
-                        <div class="bill-item">
+                    <label class="label">Transactions (click to expand):</label>
+                    ${details.map((d, i) => `
+                        <div class="bill-item" style="cursor: pointer;" onclick="showTransactionDetail('${phone}', ${i})">
                             <div class="bill-header">
                                 <span>Receipt Total: $${d.total.toFixed(2)}</span>
                                 <span class="you-owe">$${d.amount.toFixed(2)}</span>
