@@ -5,9 +5,10 @@ import {
   StyleSheet,
   ScrollView,
   RefreshControl,
-  Image,
   TouchableOpacity,
+  ActivityIndicator,
 } from 'react-native';
+import { Image } from 'expo-image';
 import { supabase } from '../lib/supabase';
 
 interface Split {
@@ -23,6 +24,7 @@ export default function HistoryScreen() {
   const [splits, setSplits] = useState<Split[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [imageLoading, setImageLoading] = useState<{ [key: string]: boolean }>({});
 
   useEffect(() => {
     fetchSplits();
@@ -98,10 +100,18 @@ export default function HistoryScreen() {
 
           {/* Receipt Image */}
           {split.receipt_image_url && (
-            <Image
-              source={{ uri: split.receipt_image_url }}
-              style={styles.receiptImage}
-            />
+            <View style={styles.receiptImageContainer}>
+              {imageLoading[split.id] && (
+                <ActivityIndicator size="large" color="#007AFF" />
+              )}
+              <Image
+                source={{ uri: split.receipt_image_url }}
+                style={styles.receiptImage}
+                onLoadStart={() => setImageLoading(prev => ({ ...prev, [split.id]: true }))}
+                onLoadEnd={() => setImageLoading(prev => ({ ...prev, [split.id]: false }))}
+                onError={() => setImageLoading(prev => ({ ...prev, [split.id]: false }))}
+              />
+            </View>
           )}
 
           {/* Split breakdown */}
@@ -196,11 +206,20 @@ const styles = StyleSheet.create({
     color: '#666',
     fontWeight: '500',
   },
-  receiptImage: {
+  receiptImageContainer: {
     width: '100%',
     height: 150,
     borderRadius: 8,
     marginVertical: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#f0f0f0',
+  },
+  receiptImage: {
+    width: '100%',
+    height: 150,
+    borderRadius: 8,
+    marginVertical: 0,
   },
   breakdownContainer: {
     marginVertical: 12,

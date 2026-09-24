@@ -58,10 +58,16 @@ export default function SplitScreen() {
   };
 
   const takePicture = async () => {
-    if (cameraRef.current) {
+    try {
+      if (!cameraRef.current) return;
       const photo = await cameraRef.current.takePictureAsync({ base64: true });
-      setPhotoUri(photo.uri);
-      setShowCamera(false);
+      if (photo?.uri) {
+        setPhotoUri(photo.uri);
+        setShowCamera(false);
+      }
+    } catch (error) {
+      Alert.alert('Camera Error', 'Failed to take picture. Try again.');
+      console.error('Camera error:', error);
     }
   };
 
@@ -92,7 +98,7 @@ export default function SplitScreen() {
     if (isSelected) {
       setSelectedFriends(selectedFriends.filter(f => f.id !== contact.id));
     } else {
-      const splitAmount = Number(totalAmount) / (selectedFriends.length + 2);
+      const splitAmount = Number(totalAmount) / (selectedFriends.length + 1);
       setSelectedFriends([
         ...selectedFriends,
         {
@@ -177,7 +183,11 @@ export default function SplitScreen() {
       for (const friend of selectedFriends) {
         const message = `Hey ${friend.name}! I split a $${friend.amount.toFixed(2)} bill with you. Receipt: ${urlData.publicUrl}`;
         const encodedMsg = encodeURIComponent(message);
-        const whatsappUrl = `https://wa.me/${friend.phoneNumber.replace(/[^0-9]/g, '')}?text=${encodedMsg}`;
+        let whatsappPhone = friend.phoneNumber.replace(/[^0-9+]/g, '');
+        if (!whatsappPhone.startsWith('+')) {
+          whatsappPhone = '+' + whatsappPhone.replace(/\D/g, '');
+        }
+        const whatsappUrl = `https://wa.me/${whatsappPhone.replace(/[^0-9+]/g, '')}?text=${encodedMsg}`;
         try {
           await Linking.openURL(whatsappUrl);
           await new Promise(resolve => setTimeout(resolve, 500));
