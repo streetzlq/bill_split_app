@@ -437,14 +437,25 @@
                 </div>
 
                 <div class="card" id="friendsSection" style="display:none;">
-                    <div class="card-title">3. Friends</div>
-                    <div class="input-group">
-                        <label class="label">Add friend name & phone</label>
+                    <div class="card-title">3. Select Friends</div>
+
+                    <div style="margin-bottom: 12px;">
+                        <button class="btn btn-secondary" onclick="showContacts()">👥 Select from Contacts</button>
+                    </div>
+
+                    <div id="contactsList" style="display:none; margin-bottom: 12px;">
+                        <label class="label">Available Contacts:</label>
+                        <div id="contactsGrid" style="display: grid; gap: 8px;"></div>
+                    </div>
+
+                    <div style="border-top: 1px solid #eee; padding-top: 12px;">
+                        <label class="label">Or add manually:</label>
                         <input type="text" id="friendName" placeholder="Name">
                         <input type="tel" id="friendPhone" placeholder="Phone (+1234567890)">
-                        <button class="btn btn-secondary" onclick="addFriend()">Add Friend</button>
+                        <button class="btn btn-secondary" onclick="addFriend()">➕ Add Friend</button>
                     </div>
-                    <div id="selectedFriends"></div>
+
+                    <div id="selectedFriends" style="margin-top: 12px;"></div>
                 </div>
 
                 <div class="card" id="confirmSection" style="display:none;">
@@ -483,6 +494,7 @@
     <script>
         // Data storage
         let splits = JSON.parse(localStorage.getItem('splits')) || [];
+        let contacts = JSON.parse(localStorage.getItem('contacts')) || [];
         let currentSplit = {
             photo: null,
             total: 0,
@@ -563,6 +575,27 @@
             document.getElementById('friendsSection').style.display = 'block';
         }
 
+        function showContacts() {
+            if (contacts.length === 0) {
+                alert('No contacts saved. Add contacts first.');
+                return;
+            }
+            const grid = document.getElementById('contactsGrid');
+            grid.innerHTML = contacts.map((c, i) =>
+                `<button class="btn btn-secondary" style="background: #4CAF50;" onclick="selectContact(${i})">${c.name} (${c.phone})</button>`
+            ).join('');
+            document.getElementById('contactsList').style.display = 'block';
+        }
+
+        function selectContact(index) {
+            const contact = contacts[index];
+            if (!currentSplit.friends.find(f => f.phone === contact.phone)) {
+                currentSplit.friends.push({ name: contact.name, phone: contact.phone, amount: currentSplit.total / (currentSplit.friends.length + 2) });
+                renderFriends();
+                document.getElementById('contactsList').style.display = 'none';
+            }
+        }
+
         function addFriend() {
             const name = document.getElementById('friendName').value;
             const phone = document.getElementById('friendPhone').value;
@@ -571,6 +604,13 @@
                 return;
             }
             currentSplit.friends.push({ name, phone, amount: currentSplit.total / (currentSplit.friends.length + 2) });
+
+            // Also save to contacts if not already there
+            if (!contacts.find(c => c.phone === phone)) {
+                contacts.push({ name, phone });
+                localStorage.setItem('contacts', JSON.stringify(contacts));
+            }
+
             document.getElementById('friendName').value = '';
             document.getElementById('friendPhone').value = '';
             renderFriends();
