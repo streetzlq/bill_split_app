@@ -11,7 +11,9 @@
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
-    "assetBundlePatterns": ["**/*"],
+    "assetBundlePatterns": [
+      "**/*"
+    ],
     "ios": {
       "supportsTabletMode": true,
       "bundleIdentifier": "com.billsplitter.app",
@@ -19,14 +21,24 @@
         "NSCameraUsageDescription": "We need camera access to capture receipt photos",
         "NSContactsUsageDescription": "We need access to your contacts to split bills with friends",
         "NSPhotoLibraryUsageDescription": "We need photo library access to save receipt images",
-        "LSApplicationQueriesSchemes": ["whatsapp"]
+        "LSApplicationQueriesSchemes": [
+          "whatsapp",
+          "whatsapp"
+        ],
+        "ITSAppUsesNonExemptEncryption": false
       }
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
-      }
+      },
+      "permissions": [
+        "android.permission.CAMERA",
+        "android.permission.RECORD_AUDIO",
+        "android.permission.READ_CONTACTS",
+        "android.permission.WRITE_CONTACTS"
+      ]
     },
     "web": {
       "favicon": "./assets/favicon.png"
@@ -44,6 +56,11 @@
           "contactsPermission": "Allow Bill Splitter to access your contacts for splitting bills"
         }
       ]
-    ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "cd17f5b0-c403-471b-a0bf-d32412fcd41d"
+      }
+    }
   }
 }
