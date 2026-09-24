@@ -5,8 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="Bill Splitter">
-    <title>Bill Splitter</title>
+    <meta name="apple-mobile-web-app-title" content="Splitify">
+    <title>Splitify</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         * {
@@ -379,20 +379,16 @@
 <body>
     <div class="container">
         <div class="header">
-            <h1>Bill Splitter</h1>
-            <p>Manage shared expenses</p>
+            <h1>Splitify</h1>
+            <p>v1.1 by Lexus</p>
         </div>
 
         <div class="content">
             <!-- Dashboard Screen -->
             <div id="dashboard" class="screen active">
                 <div class="summary-row">
-                    <div class="summary-card">
-                        <div class="summary-label">You Owe</div>
-                        <div class="summary-amount" id="totalOwed">$0.00</div>
-                    </div>
-                    <div class="summary-card">
-                        <div class="summary-label">Owed to You</div>
+                    <div class="summary-card" style="flex: 1;">
+                        <div class="summary-label">Total Owed to You</div>
                         <div class="summary-amount" id="totalOwedToYou">$0.00</div>
                     </div>
                 </div>
@@ -408,6 +404,13 @@
                 <div class="card">
                     <div class="card-title">Who Owes Whom?</div>
                     <div id="peopleList"></div>
+                </div>
+
+                <div id="detailView" style="display:none;">
+                    <div class="card">
+                        <button class="btn btn-secondary" onclick="closeDetail()">← Back</button>
+                        <div id="detailContent" style="margin-top: 12px;"></div>
+                    </div>
                 </div>
 
                 <div class="card">
@@ -684,6 +687,61 @@
             }, 2000);
         }
 
+        function showPersonDetail(phone) {
+            const peopleData = {};
+            const peopleDetails = {};
+
+            splits.forEach(split => {
+                split.friends.forEach(f => {
+                    if (f.phone === phone) {
+                        if (!peopleData[f.phone]) {
+                            peopleData[f.phone] = { name: f.name, amount: 0 };
+                            peopleDetails[f.phone] = [];
+                        }
+                        peopleData[f.phone].amount += f.amount;
+                        peopleDetails[f.phone].push({ amount: f.amount, date: split.date, total: split.total });
+                    }
+                });
+            });
+
+            const person = peopleData[phone];
+            const details = peopleDetails[phone] || [];
+
+            document.getElementById('detailContent').innerHTML = `
+                <div style="margin-bottom: 16px;">
+                    <div class="person-avatar" style="margin: 0 auto; width: 60px; height: 60px; font-size: 24px;">${person.name[0]}</div>
+                    <h2 style="text-align: center; margin-top: 12px; font-size: 20px;">${person.name}</h2>
+                    <p style="text-align: center; color: #666; margin: 4px 0;">${phone}</p>
+                </div>
+                <div style="background: #f0f8ff; padding: 12px; border-radius: 8px; margin-bottom: 16px;">
+                    <div style="text-align: center;">
+                        <div style="font-size: 12px; color: #666;">Total Owed</div>
+                        <div style="font-size: 28px; font-weight: 700; color: #FF7A59;">$${person.amount.toFixed(2)}</div>
+                    </div>
+                </div>
+                <div style="margin-bottom: 12px;">
+                    <label class="label">Breakdown by Receipt:</label>
+                    ${details.map(d => `
+                        <div class="bill-item">
+                            <div class="bill-header">
+                                <span>Receipt Total: $${d.total.toFixed(2)}</span>
+                                <span class="you-owe">$${d.amount.toFixed(2)}</span>
+                            </div>
+                            <div class="bill-date">${d.date}</div>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+
+            document.getElementById('peopleList').parentElement.style.display = 'none';
+            document.getElementById('detailView').style.display = 'block';
+        }
+
+        function closeDetail() {
+            document.getElementById('detailView').style.display = 'none';
+            document.getElementById('peopleList').parentElement.style.display = 'block';
+        }
+
         function updateDashboard() {
             if (splits.length === 0) {
                 document.getElementById('dashboard').innerHTML = `
@@ -696,12 +754,12 @@
                 return;
             }
 
-            let totalOwed = 0, totalOwedToMe = 0;
+            let totalOwedToMe = 0;
             const peopleData = {};
 
             splits.forEach(split => {
                 split.friends.forEach(f => {
-                    totalOwed += f.amount;
+                    totalOwedToMe += f.amount;
                     if (!peopleData[f.phone]) {
                         peopleData[f.phone] = { name: f.name, amount: 0 };
                     }
@@ -709,7 +767,6 @@
                 });
             });
 
-            document.getElementById('totalOwed').textContent = `$${totalOwed.toFixed(2)}`;
             document.getElementById('totalOwedToYou').textContent = `$${totalOwedToMe.toFixed(2)}`;
 
             // Pie chart
@@ -739,9 +796,9 @@
                 `<div class="legend-item"><div class="legend-dot" style="background: ${['#FF7A59', '#FFB347', '#FFC68F', '#FFE0B2'][i % 4]};"></div><span>${p.name}</span></div>`
             ).join('');
 
-            // People list
+            // People list - clickable
             document.getElementById('peopleList').innerHTML = Object.entries(peopleData).map(([phone, data]) =>
-                `<div class="person-item"><div class="person-avatar">${data.name[0]}</div><div class="person-info"><div class="person-name">${data.name}</div><div class="person-status">${phone}</div></div><div class="person-amount you-owe">$${data.amount.toFixed(2)}</div></div>`
+                `<div class="person-item" style="cursor: pointer;" onclick="showPersonDetail('${phone}')"><div class="person-avatar">${data.name[0]}</div><div class="person-info"><div class="person-name">${data.name}</div><div class="person-status">${phone}</div></div><div class="person-amount you-owe">$${data.amount.toFixed(2)}</div></div>`
             ).join('');
         }
 
