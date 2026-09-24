@@ -1,0 +1,728 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Bill Splitter">
+    <title>Bill Splitter</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        html, body {
+            width: 100%;
+            height: 100%;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+        }
+
+        body {
+            background: #f5f5f5;
+            padding-bottom: 90px;
+        }
+
+        .container {
+            max-width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #FF7A59 0%, #FF8F73 100%);
+            color: white;
+            padding: 16px 16px 12px;
+            padding-top: max(16px, env(safe-area-inset-top));
+        }
+
+        .header h1 {
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+
+        .header p {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+
+        .content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 16px;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .screen {
+            display: none;
+        }
+
+        .screen.active {
+            display: block;
+        }
+
+        .card {
+            background: white;
+            border-radius: 16px;
+            padding: 16px;
+            margin-bottom: 12px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        }
+
+        .card-title {
+            font-size: 14px;
+            font-weight: 700;
+            color: #333;
+            margin-bottom: 12px;
+        }
+
+        .summary-row {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+
+        .summary-card {
+            flex: 1;
+            background: rgba(0, 0, 0, 0.15);
+            border-radius: 12px;
+            padding: 12px;
+            color: white;
+        }
+
+        .summary-label {
+            font-size: 12px;
+            opacity: 0.85;
+            margin-bottom: 6px;
+        }
+
+        .summary-amount {
+            font-size: 22px;
+            font-weight: 700;
+        }
+
+        .person-item {
+            display: flex;
+            align-items: center;
+            padding: 10px 0;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .person-item:last-child {
+            border-bottom: none;
+        }
+
+        .person-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #FF7A59, #FF8F73);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            margin-right: 12px;
+            flex-shrink: 0;
+        }
+
+        .person-info {
+            flex: 1;
+        }
+
+        .person-name {
+            font-weight: 600;
+            color: #333;
+            font-size: 14px;
+        }
+
+        .person-status {
+            font-size: 12px;
+            color: #999;
+            margin-top: 2px;
+        }
+
+        .person-amount {
+            font-weight: 700;
+            font-size: 14px;
+        }
+
+        .owed-you {
+            color: #34C759;
+        }
+
+        .you-owe {
+            color: #FF3B30;
+        }
+
+        .input-group {
+            margin-bottom: 12px;
+        }
+
+        .label {
+            display: block;
+            font-weight: 600;
+            color: #333;
+            font-size: 13px;
+            margin-bottom: 8px;
+        }
+
+        input[type="text"],
+        input[type="number"],
+        input[type="tel"],
+        textarea {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+            font-family: inherit;
+            margin-bottom: 8px;
+        }
+
+        input[type="file"] {
+            display: block;
+            width: 100%;
+            margin-bottom: 8px;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 12px;
+            background: #FF7A59;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 16px;
+            cursor: pointer;
+            margin-top: 8px;
+            -webkit-appearance: none;
+            appearance: none;
+        }
+
+        .btn:active {
+            background: #FF6B45;
+        }
+
+        .btn-secondary {
+            background: #999;
+        }
+
+        .btn-secondary:active {
+            background: #777;
+        }
+
+        .photo-preview {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+            border-radius: 8px;
+            margin: 12px 0;
+        }
+
+        #camera {
+            width: 100%;
+            max-height: 300px;
+            border-radius: 8px;
+            margin: 12px 0;
+        }
+
+        .bill-item {
+            background: #f9f9f9;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 8px;
+        }
+
+        .bill-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 4px;
+        }
+
+        .bill-name {
+            font-weight: 600;
+            color: #333;
+            font-size: 13px;
+        }
+
+        .bill-amount {
+            font-weight: 700;
+            font-size: 13px;
+        }
+
+        .bill-date {
+            font-size: 11px;
+            color: #999;
+        }
+
+        .tab-bar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 80px;
+            background: white;
+            border-top: 1px solid #e0e0e0;
+            display: flex;
+            justify-content: space-around;
+            padding-top: 8px;
+            padding-bottom: max(20px, env(safe-area-inset-bottom));
+        }
+
+        .tab-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            font-size: 10px;
+            color: #999;
+            cursor: pointer;
+            padding: 4px 12px;
+            flex: 1;
+        }
+
+        .tab-item.active {
+            color: #FF7A59;
+            font-weight: 600;
+        }
+
+        .tab-icon {
+            font-size: 24px;
+        }
+
+        .pie-container {
+            display: flex;
+            justify-content: center;
+            margin: 16px 0;
+            height: 200px;
+        }
+
+        .legend {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            justify-content: center;
+            margin-top: 12px;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 12px;
+        }
+
+        .legend-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: #999;
+        }
+
+        .empty-state-icon {
+            font-size: 48px;
+            margin-bottom: 12px;
+        }
+
+        .error {
+            background: #FFEBEE;
+            color: #C62828;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 12px;
+            font-size: 13px;
+        }
+
+        .success {
+            background: #E8F5E9;
+            color: #2E7D32;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 12px;
+            font-size: 13px;
+        }
+
+        .friend-chip {
+            display: inline-block;
+            background: #FF7A59;
+            color: white;
+            padding: 8px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            margin-right: 8px;
+            margin-bottom: 8px;
+        }
+
+        .friend-chip button {
+            background: none;
+            border: none;
+            color: white;
+            margin-left: 6px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Bill Splitter</h1>
+            <p>Manage shared expenses</p>
+        </div>
+
+        <div class="content">
+            <!-- Dashboard Screen -->
+            <div id="dashboard" class="screen active">
+                <div class="summary-row">
+                    <div class="summary-card">
+                        <div class="summary-label">You Owe</div>
+                        <div class="summary-amount" id="totalOwed">$0.00</div>
+                    </div>
+                    <div class="summary-card">
+                        <div class="summary-label">Owed to You</div>
+                        <div class="summary-amount" id="totalOwedToYou">$0.00</div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-title">Breakdown by Person</div>
+                    <div class="pie-container">
+                        <canvas id="pieChart"></canvas>
+                    </div>
+                    <div class="legend" id="legend"></div>
+                </div>
+
+                <div class="card">
+                    <div class="card-title">Who Owes Whom?</div>
+                    <div id="peopleList"></div>
+                </div>
+
+                <div class="card">
+                    <div class="card-title">Pending Bills</div>
+                    <div id="billsList"></div>
+                </div>
+            </div>
+
+            <!-- Split Screen -->
+            <div id="split" class="screen">
+                <div id="splitMessage"></div>
+
+                <div class="card">
+                    <div class="card-title">1. Upload Receipt Photo</div>
+                    <input type="file" id="photoInput" accept="image/*" capture="environment">
+                    <img id="photoPreview" class="photo-preview" style="display:none;">
+                    <button class="btn" onclick="openCamera()">📷 Take Photo</button>
+                </div>
+
+                <div class="card" id="amountSection" style="display:none;">
+                    <div class="card-title">2. Total Amount</div>
+                    <div class="input-group">
+                        <label class="label">Enter amount ($)</label>
+                        <input type="number" id="totalAmount" placeholder="0.00" step="0.01">
+                    </div>
+                    <button class="btn" onclick="selectFriends()">👥 Add Friends</button>
+                </div>
+
+                <div class="card" id="friendsSection" style="display:none;">
+                    <div class="card-title">3. Friends</div>
+                    <div class="input-group">
+                        <label class="label">Add friend name & phone</label>
+                        <input type="text" id="friendName" placeholder="Name">
+                        <input type="tel" id="friendPhone" placeholder="Phone (+1234567890)">
+                        <button class="btn btn-secondary" onclick="addFriend()">Add Friend</button>
+                    </div>
+                    <div id="selectedFriends"></div>
+                </div>
+
+                <div class="card" id="confirmSection" style="display:none;">
+                    <div class="card-title">4. Your Phone</div>
+                    <div class="input-group">
+                        <label class="label">Your phone number</label>
+                        <input type="tel" id="myPhone" placeholder="Your phone (+1234567890)">
+                    </div>
+                    <div id="splitSummary"></div>
+                    <button class="btn" onclick="createSplit()" style="background: #34C759;">✅ Create & Send</button>
+                </div>
+            </div>
+
+            <!-- History Screen -->
+            <div id="history" class="screen">
+                <div id="historyList"></div>
+            </div>
+        </div>
+
+        <div class="tab-bar">
+            <div class="tab-item active" onclick="switchTab('dashboard')">
+                <div class="tab-icon">📊</div>
+                <div>Dashboard</div>
+            </div>
+            <div class="tab-item" onclick="switchTab('split')">
+                <div class="tab-icon">➕</div>
+                <div>Split</div>
+            </div>
+            <div class="tab-item" onclick="switchTab('history')">
+                <div class="tab-icon">📋</div>
+                <div>History</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Data storage
+        let splits = JSON.parse(localStorage.getItem('splits')) || [];
+        let currentSplit = {
+            photo: null,
+            total: 0,
+            friends: [],
+            myPhone: ''
+        };
+
+        // UI Functions
+        function switchTab(tabName) {
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            document.querySelectorAll('.tab-item').forEach(t => t.classList.remove('active'));
+            document.getElementById(tabName).classList.add('active');
+            event.target.closest('.tab-item').classList.add('active');
+            if (tabName === 'dashboard') updateDashboard();
+            if (tabName === 'history') updateHistory();
+        }
+
+        // Camera
+        async function openCamera() {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+                const video = document.createElement('video');
+                video.id = 'camera';
+                video.srcObject = stream;
+                video.play();
+                const container = document.querySelector('.card');
+                container.insertBefore(video, document.getElementById('photoInput'));
+
+                const canvas = document.createElement('canvas');
+                const captureBtn = document.createElement('button');
+                captureBtn.className = 'btn';
+                captureBtn.textContent = '📸 Capture';
+                captureBtn.onclick = () => {
+                    const ctx = canvas.getContext('2d');
+                    canvas.width = video.videoWidth;
+                    canvas.height = video.videoHeight;
+                    ctx.drawImage(video, 0, 0);
+                    canvas.toBlob(blob => {
+                        currentSplit.photo = blob;
+                        const reader = new FileReader();
+                        reader.onload = (e) => {
+                            document.getElementById('photoPreview').src = e.target.result;
+                            document.getElementById('photoPreview').style.display = 'block';
+                            document.getElementById('amountSection').style.display = 'block';
+                            video.remove();
+                            captureBtn.remove();
+                            stream.getTracks().forEach(track => track.stop());
+                        };
+                        reader.readAsDataURL(blob);
+                    });
+                };
+                container.appendChild(captureBtn);
+            } catch (err) {
+                alert('Camera access denied. Use file input instead.');
+            }
+        }
+
+        document.getElementById('photoInput').addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                currentSplit.photo = file;
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    document.getElementById('photoPreview').src = event.target.result;
+                    document.getElementById('photoPreview').style.display = 'block';
+                    document.getElementById('amountSection').style.display = 'block';
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+
+        function selectFriends() {
+            if (!document.getElementById('totalAmount').value) {
+                alert('Enter total amount first');
+                return;
+            }
+            currentSplit.total = parseFloat(document.getElementById('totalAmount').value);
+            document.getElementById('friendsSection').style.display = 'block';
+        }
+
+        function addFriend() {
+            const name = document.getElementById('friendName').value;
+            const phone = document.getElementById('friendPhone').value;
+            if (!name || !phone) {
+                alert('Enter name and phone');
+                return;
+            }
+            currentSplit.friends.push({ name, phone, amount: currentSplit.total / (currentSplit.friends.length + 2) });
+            document.getElementById('friendName').value = '';
+            document.getElementById('friendPhone').value = '';
+            renderFriends();
+        }
+
+        function removeFriend(index) {
+            currentSplit.friends.splice(index, 1);
+            renderFriends();
+        }
+
+        function renderFriends() {
+            const container = document.getElementById('selectedFriends');
+            container.innerHTML = currentSplit.friends.map((f, i) =>
+                `<div class="friend-chip">${f.name} <button onclick="removeFriend(${i})">×</button></div>`
+            ).join('');
+            if (currentSplit.friends.length > 0) {
+                document.getElementById('confirmSection').style.display = 'block';
+                renderSplitSummary();
+            }
+        }
+
+        function renderSplitSummary() {
+            const amount = currentSplit.total / currentSplit.friends.length;
+            document.getElementById('splitSummary').innerHTML = `
+                <div class="bill-item">
+                    <div class="bill-header">
+                        <span>Total: $${currentSplit.total.toFixed(2)}</span>
+                        <span>Friends: ${currentSplit.friends.length}</span>
+                    </div>
+                    <div>Per person: $${amount.toFixed(2)}</div>
+                </div>
+            `;
+        }
+
+        async function createSplit() {
+            currentSplit.myPhone = document.getElementById('myPhone').value;
+            if (!currentSplit.myPhone) {
+                alert('Enter your phone number');
+                return;
+            }
+
+            const split = {
+                id: Date.now(),
+                photo: currentSplit.photo ? URL.createObjectURL(currentSplit.photo) : null,
+                total: currentSplit.total,
+                friends: currentSplit.friends.map(f => ({ ...f, amount: currentSplit.total / currentSplit.friends.length })),
+                myPhone: currentSplit.myPhone,
+                date: new Date().toLocaleString()
+            };
+
+            splits.push(split);
+            localStorage.setItem('splits', JSON.stringify(splits));
+
+            // Send WhatsApp messages
+            for (const friend of split.friends) {
+                const msg = `Hey ${friend.name}! ${split.myPhone} is requesting $${friend.amount.toFixed(2)} for a bill split.`;
+                const wa = `https://wa.me/${friend.phone.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(msg)}`;
+                setTimeout(() => window.open(wa, '_blank'), 500);
+            }
+
+            document.getElementById('splitMessage').innerHTML = '<div class="success">✅ Split created! WhatsApp messages sent.</div>';
+            setTimeout(() => {
+                currentSplit = { photo: null, total: 0, friends: [], myPhone: '' };
+                document.getElementById('split').querySelectorAll('input').forEach(i => i.value = '');
+                document.getElementById('photoPreview').style.display = 'none';
+                document.getElementById('amountSection').style.display = 'none';
+                document.getElementById('friendsSection').style.display = 'none';
+                document.getElementById('confirmSection').style.display = 'none';
+                document.getElementById('splitMessage').innerHTML = '';
+                switchTab('dashboard');
+            }, 2000);
+        }
+
+        function updateDashboard() {
+            if (splits.length === 0) {
+                document.getElementById('dashboard').innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">📊</div>
+                        <div>No splits yet</div>
+                        <p>Create your first split</p>
+                    </div>
+                `;
+                return;
+            }
+
+            let totalOwed = 0, totalOwedToMe = 0;
+            const peopleData = {};
+
+            splits.forEach(split => {
+                split.friends.forEach(f => {
+                    totalOwed += f.amount;
+                    if (!peopleData[f.phone]) {
+                        peopleData[f.phone] = { name: f.name, amount: 0 };
+                    }
+                    peopleData[f.phone].amount += f.amount;
+                });
+            });
+
+            document.getElementById('totalOwed').textContent = `$${totalOwed.toFixed(2)}`;
+            document.getElementById('totalOwedToYou').textContent = `$${totalOwedToMe.toFixed(2)}`;
+
+            // Pie chart
+            const ctx = document.getElementById('pieChart');
+            if (ctx) {
+                new Chart(ctx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: Object.values(peopleData).map(p => p.name),
+                        datasets: [{
+                            data: Object.values(peopleData).map(p => p.amount),
+                            backgroundColor: ['#FF7A59', '#FFB347', '#FFC68F', '#FFE0B2', '#FFD9A3'],
+                            borderColor: 'white',
+                            borderWidth: 2
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { legend: { display: false } }
+                    }
+                });
+            }
+
+            // Legend
+            document.getElementById('legend').innerHTML = Object.values(peopleData).map((p, i) =>
+                `<div class="legend-item"><div class="legend-dot" style="background: ${['#FF7A59', '#FFB347', '#FFC68F', '#FFE0B2'][i % 4]};"></div><span>${p.name}</span></div>`
+            ).join('');
+
+            // People list
+            document.getElementById('peopleList').innerHTML = Object.entries(peopleData).map(([phone, data]) =>
+                `<div class="person-item"><div class="person-avatar">${data.name[0]}</div><div class="person-info"><div class="person-name">${data.name}</div><div class="person-status">${phone}</div></div><div class="person-amount you-owe">$${data.amount.toFixed(2)}</div></div>`
+            ).join('');
+        }
+
+        function updateHistory() {
+            document.getElementById('historyList').innerHTML = splits.length === 0 ?
+                `<div class="empty-state"><div class="empty-state-icon">📋</div><div>No history</div></div>` :
+                splits.map(s => `
+                    <div class="card">
+                        <div class="bill-header">
+                            <span class="bill-name">Total: $${s.total.toFixed(2)}</span>
+                            <span class="bill-date">${s.date}</span>
+                        </div>
+                        ${s.photo ? `<img src="${s.photo}" class="photo-preview" style="height:150px;">` : ''}
+                        <div style="margin-top:12px;">
+                            ${s.friends.map(f => `<div class="bill-item"><div class="bill-header"><span>${f.name}</span><span class="you-owe">$${f.amount.toFixed(2)}</span></div></div>`).join('')}
+                        </div>
+                    </div>
+                `).join('');
+        }
+
+        updateDashboard();
+    </script>
+</body>
+</html>
