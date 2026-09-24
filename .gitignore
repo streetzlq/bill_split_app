@@ -1,0 +1,32 @@
+# Expo
+.expo
+.expo-shared
+
+# Dependencies
+node_modules
+npm-debug.*
+yarn-debug.*
+yarn-error.*
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# IDE
+.vscode
+.idea
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Build
+dist
+build
+.eas
+
+# Logs
+*.log

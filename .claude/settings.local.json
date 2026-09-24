@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "PowerShell(npm install -g eas-cli)",
+      "PowerShell(claude plugin install expo@claude-plugins-official)"
+    ]
+  }
+}
