@@ -2,7 +2,15 @@
   "permissions": {
     "allow": [
       "PowerShell(npm install -g eas-cli)",
-      "PowerShell(claude plugin install expo@claude-plugins-official)"
+      "PowerShell(claude plugin install expo@claude-plugins-official)",
+      "Bash(git add *)",
+      "Bash(git commit -m ' *)",
+      "Bash(git remote *)",
+      "Bash(git branch *)",
+      "Bash(git push *)",
+      "Bash(git commit -m 'Add placeholder app assets *)",
+      "Bash(git commit *)",
+      "PowerShell(node --version)"
     ]
   }
 }

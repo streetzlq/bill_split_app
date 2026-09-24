@@ -3,6 +3,7 @@
     "name": "Bill Splitter",
     "slug": "bill-splitter",
     "version": "1.0.0",
+    "sdkVersion": "57.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
@@ -38,7 +39,8 @@
         "android.permission.RECORD_AUDIO",
         "android.permission.READ_CONTACTS",
         "android.permission.WRITE_CONTACTS"
-      ]
+      ],
+      "package": "com.billsplitter.app"
     },
     "web": {
       "favicon": "./assets/favicon.png"
